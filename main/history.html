@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>History — Market Woman List</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" type="image/png" href="../global.png" />
+  <link rel="manifest" href="../manifest.json" />
+  <script>(function(){ var t=localStorage.getItem('gnoke_market_theme'); if(t) document.documentElement.setAttribute('data-theme',t); })();</script>
+  <style>
+    /* ── Period tabs ── */
+    .period-tabs {
+      display: flex; gap: 6px; margin-bottom: 22px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 4px;
+    }
+    .period-tab {
+      flex: 1; padding: 8px 10px; border: none; border-radius: 7px;
+      background: none; cursor: pointer;
+      font-family: var(--font-sans); font-size: .8rem; font-weight: 600;
+      color: var(--muted); transition: background var(--transition), color var(--transition);
+    }
+    .period-tab.active {
+      background: var(--surface); color: var(--accent);
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+
+    /* ── Stat cards ── */
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 18px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+    }
+    .stat-card-label {
+      font-family: var(--font-mono); font-size: .6rem;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .stat-card-value {
+      font-family: var(--font-display); font-size: 1.35rem;
+      font-weight: 700; color: var(--text); line-height: 1;
+    }
+    .stat-card-value.accent { color: var(--accent); }
+    .stat-card-value.warm   { color: var(--warm); }
+
+    /* ── Period breakdown list ── */
+    .period-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .period-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .period-row-left {}
+    .period-row-label {
+      font-size: .88rem; font-weight: 600; color: var(--text); margin-bottom: 3px;
+    }
+    .period-row-meta {
+      font-family: var(--font-mono); font-size: .66rem; color: var(--muted);
+    }
+    .period-row-right { text-align: right; flex-shrink: 0; }
+    .period-row-spent {
+      font-family: var(--font-mono); font-size: .95rem;
+      font-weight: 700; color: var(--warm);
+    }
+    .period-row-planned {
+      font-family: var(--font-mono); font-size: .68rem; color: var(--muted); margin-top: 2px;
+    }
+
+    /* ── Bar ── */
+    .period-bar-wrap {
+      height: 4px; background: var(--bg2); border-radius: 2px;
+      margin-top: 8px; overflow: hidden;
+    }
+    .period-bar-fill {
+      height: 100%; background: var(--warm); border-radius: 2px;
+      transition: width .4s ease;
+    }
+
+    /* ── Empty state ── */
+    .hist-empty {
+      text-align: center; padding: 48px 20px;
+      color: var(--muted); font-family: var(--font-mono); font-size: .8rem;
+    }
+    .hist-empty-icon { font-size: 2.4rem; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+<header id="topbar">
+  <div id="topbar-left">
+    <div id="topbar-brand">
+      <span id="topbar-gnoke">Gnoke</span>
+      <span id="topbar-app">Market Woman List</span>
+    </div>
+  </div>
+  <div id="topbar-right">
+    <button class="icon-btn theme-toggle-btn">🌙</button>
+  </div>
+</header>
+
+<main class="pages">
+  <section class="page active">
+    <div class="page-content">
+
+      <div class="page-header">
+        <div>
+          <h1>History</h1>
+          <p class="sub">Spending by week &amp; month</p>
+        </div>
+      </div>
+
+      <!-- Period tabs -->
+      <div class="period-tabs">
+        <button class="period-tab active" data-period="weekly">Weekly</button>
+        <button class="period-tab" data-period="monthly">Monthly</button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="stat-grid" id="stat-grid"></div>
+
+      <!-- Breakdown list -->
+      <div class="period-list" id="period-list"></div>
+
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script src="../js/theme.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/db.js"></script>
+<script>
+  Theme.init(); UI.init();
+
+  const fmt = (n) => '₦' + (parseFloat(n)||0).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  /* ── Week key: ISO week string "2026-W14" ── */
+  function weekKey(date) {
+    const d = new Date(date);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const wk = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+  }
+
+  /* ── Week label: "7 – 13 Apr 2026" ── */
+  function weekLabel(key) {
+    const [year, w] = key.split('-W');
+    const jan4 = new Date(parseInt(year), 0, 4);
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - ((jan4.getDay() || 7) - 1) + (parseInt(w) - 1) * 7);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const opts = { day: 'numeric', month: 'short' };
+    const s = monday.toLocaleDateString('en-GB', opts);
+    const e = sunday.toLocaleDateString('en-GB', { ...opts, year: 'numeric' });
+    return `${s} – ${e}`;
+  }
+
+  /* ── Month key: "2026-04" ── */
+  function monthKey(date) {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  function monthLabel(key) {
+    const [year, mon] = key.split('-');
+    return new Date(parseInt(year), parseInt(mon)-1, 1)
+      .toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  }
+
+  /* ── Core aggregation ── */
+  function aggregate(period) {
+    const trips = DB.getTrips();
+    const buckets = {};
+
+    trips.forEach(trip => {
+      const items   = DB.getItems(trip.id);
+      const spent   = items.filter(i => i.checked).reduce((s,i) => s + (parseFloat(i.price)||0)*(parseFloat(i.qty)||1), 0);
+      const planned = items.reduce((s,i) => s + (parseFloat(i.price)||0)*(parseFloat(i.qty)||1), 0);
+      const key     = period === 'weekly' ? weekKey(trip.created_at) : monthKey(trip.created_at);
+
+      if (!buckets[key]) buckets[key] = { key, spent: 0, planned: 0, trips: 0 };
+      buckets[key].spent   += spent;
+      buckets[key].planned += planned;
+      buckets[key].trips   += 1;
+    });
+
+    return Object.values(buckets).sort((a,b) => b.key.localeCompare(a.key));
+  }
+
+  let activePeriod = 'weekly';
+
+  function render() {
+    const rows = aggregate(activePeriod);
+    const statGrid  = document.getElementById('stat-grid');
+    const listEl    = document.getElementById('period-list');
+
+    if (rows.length === 0) {
+      statGrid.innerHTML = '';
+      listEl.innerHTML = `
+        <div class="hist-empty">
+          <div class="hist-empty-icon">📭</div>
+          No trips yet. Start a market list to see your spending history.
+        </div>`;
+      return;
+    }
+
+    const totalSpent   = rows.reduce((s,r) => s + r.spent,   0);
+    const totalTrips   = rows.reduce((s,r) => s + r.trips,   0);
+    const avgPerPeriod = rows.length > 0 ? totalSpent / rows.length : 0;
+    const maxSpent     = Math.max(...rows.map(r => r.spent));
+
+    const periodLabel  = activePeriod === 'weekly' ? 'week' : 'month';
+
+    statGrid.innerHTML = `
+      <div class="stat-card">
+        <div class="stat-card-label">Total Spent</div>
+        <div class="stat-card-value warm">${fmt(totalSpent)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Total Trips</div>
+        <div class="stat-card-value accent">${totalTrips}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Avg / ${periodLabel}</div>
+        <div class="stat-card-value">${fmt(avgPerPeriod)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Periods</div>
+        <div class="stat-card-value">${rows.length}</div>
+      </div>`;
+
+    listEl.innerHTML = rows.map(r => {
+      const label   = activePeriod === 'weekly' ? weekLabel(r.key) : monthLabel(r.key);
+      const barPct  = maxSpent > 0 ? Math.round((r.spent / maxSpent) * 100) : 0;
+      return `
+        <div class="period-row">
+          <div class="period-row-left" style="flex:1">
+            <div class="period-row-label">${label}</div>
+            <div class="period-row-meta">${r.trips} trip${r.trips !== 1 ? 's' : ''}</div>
+            <div class="period-bar-wrap">
+              <div class="period-bar-fill" style="width:${barPct}%"></div>
+            </div>
+          </div>
+          <div class="period-row-right">
+            <div class="period-row-spent">${fmt(r.spent)}</div>
+            ${r.planned !== r.spent ? `<div class="period-row-planned">of ${fmt(r.planned)} planned</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  (async () => {
+    await DB.init();
+    render();
+
+    document.querySelectorAll('.period-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activePeriod = tab.dataset.period;
+        render();
+      });
+    });
+  })();
+</script>
+<script src="menu.js"></script>
+</body>
+</html>
