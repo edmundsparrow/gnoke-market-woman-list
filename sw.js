@@ -1,10 +1,18 @@
 const CACHE_NAME = 'gnoke-market-v1';
 const ASSETS = [
   './', '../',
-  './index.html', './settings.html', './about.html',
-  '../style.css', '../global.png', '../manifest.json',
-  '../js/state.js', '../js/theme.js', '../js/ui.js',
-  '../js/db.js', '../js/app.js',
+  './index.html',
+  './main/index.html',
+'./settings.html', 
+'./about.html',
+  '../style.css', 
+'../global.png', 
+'../manifest.json',
+  '../js/state.js', 
+'../js/theme.js', 
+'../js/ui.js',
+  '../js/db.js',
+'../js/app.js',
   './menu.js',
 ];
 
