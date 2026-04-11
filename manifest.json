@@ -2,7 +2,7 @@
   "name": "Market Woman List",
   "short_name": "Market List",
   "description": "Offline-first smart market shopping list. Track trips, prices, quantities, and spending.",
-  "start_url": "./main/index.html",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#1e3d1a",
   "theme_color": "#2a7a45",
