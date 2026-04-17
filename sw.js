@@ -11,7 +11,7 @@ const ASSETS = [
   './js/state.js', 
   './js/theme.js', 
   './js/ui.js',
-  './js/db.js',
+  './js/db-core.js',
   './js/app.js',
   './menu.js',
 ];
