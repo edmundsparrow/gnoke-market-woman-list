@@ -50,7 +50,18 @@
             <h1>Market Lists</h1>
             <p class="sub">Your shopping trips</p>
           </div>
-          <button class="btn btn-primary" id="btn-new-trip">+ New Trip</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="icon-btn" id="btn-share-mode" title="Share trips">📤</button>
+            <button class="btn btn-primary" id="btn-new-trip">+ New Trip</button>
+          </div>
+        </div>
+
+        <div id="share-toolbar" class="share-toolbar">
+          <span id="share-count" class="share-count">Select trips to share</span>
+          <div class="share-toolbar-actions">
+            <button class="btn btn-ghost btn-sm" id="btn-share-cancel">Cancel</button>
+            <button class="btn btn-primary btn-sm" id="btn-share-go" disabled>📤 Share</button>
+          </div>
         </div>
 
         <div id="trips-list"></div>
@@ -195,21 +206,19 @@
 <div id="toast"></div>
 
 <!-- SCRIPTS -->
-<!-- sql.js from CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<!-- sql.js — vendored locally, no CDN -->
+<script src="../js/vendor/sql-wasm.js"></script>
 <script src="../js/state.js"></script>
 <script src="../js/theme.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/db.js"></script>
+<script src="../js/share.js"></script>
 <script src="../js/app.js"></script>
 <script src="menu.js"></script>
 
 <!-- PWA Service Worker -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('../sw.js').catch(() => {}));
-  }
-</script>
+<script src="../js/sw-update.js"></script>
+<script>GnokeSW.register();</script>
 
 </body>
 </html>

@@ -60,6 +60,19 @@
         </div>
 
         <div class="form-card">
+          <h2 class="card-title">🔄 App Update</h2>
+          <p class="hint" style="margin-bottom:14px;">
+            The app works offline from a saved copy of its files. Tap this
+            after a new version is released to fetch it — your trips and
+            items are stored separately and are never affected.
+          </p>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="btn-update">⬇ Check for Update</button>
+            <span id="update-status" class="hint" style="margin:0;"></span>
+          </div>
+        </div>
+
+        <div class="form-card">
           <h2 class="card-title">ℹ️ Storage Info</h2>
           <table class="about-table">
             <tbody>
@@ -77,7 +90,7 @@
 </main>
 
 <div id="toast"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script src="../js/vendor/sql-wasm.js"></script>
 <script src="../js/theme.js"></script>
 <script src="../js/ui.js"></script>
 <script src="../js/db.js"></script>
@@ -119,8 +132,28 @@
       localStorage.removeItem('gnoke_market_db');
       UI.toast('All data cleared. Reload the app.', 'ok');
     });
+
+    document.getElementById('btn-update')?.addEventListener('click', async () => {
+      const statusEl = document.getElementById('update-status');
+      const btn = document.getElementById('btn-update');
+      btn.disabled = true;
+      statusEl.textContent = 'Checking…';
+      try {
+        const updated = await GnokeSW.forceUpdate();
+        statusEl.textContent = updated
+          ? 'Update found — reloading…'
+          : 'Already up to date.';
+        if (!updated) btn.disabled = false;
+        // If updated, the page will reload itself once the new
+        // worker takes control (see sw-update.js controllerchange).
+      } catch {
+        statusEl.textContent = 'Could not check for updates.';
+        btn.disabled = false;
+      }
+    });
   })();
 </script>
+<script src="../js/sw-update.js"></script>
 <script src="menu.js"></script>
 </body>
 </html>
