@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return `
         <div class="trip-card${done ? ' trip-card--done' : ''}" data-id="${t.id}">
           <div class="trip-card-top">
+            <div class="trip-select-cb-wrap">
+              <input type="checkbox" class="trip-select-cb" data-id="${t.id}" ${Share.isSelected(t.id) ? 'checked' : ''} />
+            </div>
             <div class="trip-card-info">
               <div class="trip-card-name">${UI.escHtml(t.name)}</div>
               <div class="trip-card-meta">${date} · ${got}/${total} items</div>
@@ -85,8 +88,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     list.querySelectorAll('.trip-card').forEach(card => {
       card.addEventListener('click', e => {
         if (e.target.closest('.delete-trip-btn')) return;
+        if (Share.isActive()) {
+          if (e.target.closest('.trip-select-cb-wrap')) return; // checkbox handles itself
+          const cb = card.querySelector('.trip-select-cb');
+          if (cb) { cb.checked = !cb.checked; Share.toggle(card.dataset.id, cb.checked); }
+          return;
+        }
         openTrip(card.dataset.id);
       });
+    });
+
+    list.querySelectorAll('.trip-select-cb').forEach(cb => {
+      cb.addEventListener('change', () => Share.toggle(cb.dataset.id, cb.checked));
     });
 
     list.querySelectorAll('.delete-trip-btn').forEach(btn => {
@@ -100,6 +113,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   }
+
+  /* ══ SHARE (select mode) ══ */
+  document.getElementById('btn-share-mode')?.addEventListener('click', () => {
+    Share.enter();
+    renderTrips();
+  });
+
+  document.getElementById('btn-share-cancel')?.addEventListener('click', () => {
+    Share.exit();
+    renderTrips();
+  });
+
+  document.getElementById('btn-share-go')?.addEventListener('click', async () => {
+    await Share.shareSelected();
+    renderTrips(); // reflects exit() if share completed, or leaves selection if cancelled
+  });
 
   /* New trip modal */
   document.getElementById('btn-new-trip')?.addEventListener('click', () => {

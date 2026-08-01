@@ -30,6 +30,14 @@ const DB = (() => {
   let   _sql    = null;   // SQL.js namespace
   let   _db     = null;   // open Database instance
 
+  // Base path for vendored sql.js files, derived from this script's own
+  // <script src> — works whether db.js is included from the root
+  // ('js/db.js') or from main/ ('../js/db.js'), no hardcoded depth.
+  const _scriptSrc = document.currentScript && document.currentScript.src;
+  const _vendorBase = _scriptSrc
+    ? _scriptSrc.replace(/js\/db\.js(\?.*)?$/, 'js/vendor/')
+    : 'js/vendor/';
+
   /* ── Persistence: save binary to localStorage ── */
   function _persist() {
     try {
@@ -84,9 +92,10 @@ const DB = (() => {
   async function init() {
     if (_db) return;
 
-    // Load sql.js from CDN
+    // Load sql.js — vendored locally (no CDN), so it works fully offline
+    // and gets precached by the service worker like everything else.
     _sql = await initSqlJs({
-      locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${file}`
+      locateFile: file => _vendorBase + file
     });
 
     const saved = _load();
