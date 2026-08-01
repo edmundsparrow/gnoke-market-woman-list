@@ -344,6 +344,26 @@ input:focus, select:focus, textarea:focus {
 .trip-card:hover .icon-btn-sm { opacity: 1; }
 .icon-btn-sm:hover { color: var(--danger) !important; opacity: 1 !important; }
 
+/* ── Share: select mode ── */
+.share-toolbar {
+  display: none; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.share-toolbar.active { display: flex; }
+.share-count {
+  font-family: var(--font-mono); font-size: .72rem; color: var(--muted);
+}
+.share-toolbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.trip-select-cb-wrap {
+  display: none; align-items: center; margin-right: 2px; flex-shrink: 0;
+}
+.select-mode .trip-select-cb-wrap { display: flex; }
+.select-mode .delete-trip-btn { display: none !important; }
+.trip-select-cb { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
 .badge {
   font-family: var(--font-mono); font-size: .68rem; font-weight: 700;
   letter-spacing: .08em; padding: 3px 10px; border-radius: 20px;

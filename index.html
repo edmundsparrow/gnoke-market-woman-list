@@ -13,11 +13,8 @@
   <link rel="apple-touch-icon" href="global.png" />
   <link rel="manifest"         href="manifest.json" />
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
+  <script src="js/sw-update.js"></script>
+  <script>GnokeSW.register();</script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
